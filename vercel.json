@@ -4,6 +4,8 @@
   "outputDirectory": "dist",
   "rewrites": [
     { "source": "/lead-magnet", "destination": "/index.html" },
-    { "source": "/herramienta", "destination": "/index.html" }
+    { "source": "/herramienta", "destination": "/index.html" },
+    { "source": "/lead-magnet/assets/:path*", "destination": "/assets/:path*" },
+    { "source": "/herramienta/assets/:path*", "destination": "/assets/:path*" }
   ]
 }
