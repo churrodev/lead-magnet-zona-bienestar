@@ -256,9 +256,9 @@ function renderPost(index, state, productUrl) {
   const post = posts[index];
   const card = document.querySelector("#post-card");
   card.innerHTML = `<div class="post-icon" aria-hidden="true">${post.icon}</div><p class="eyebrow">${post.label}</p><h2>${post.title}</h2>
-    <div class="post-section"><span>WHY</span>${post.why.map((paragraph) => `<p>${paragraph}</p>`).join("")}</div>
-    <div class="post-section outcome"><span>WHAT</span>${post.what.map((paragraph) => `<p>${paragraph}</p>`).join("")}</div>
-    <div class="post-section solution"><span>HOW</span><p>${post.how}</p><a class="primary-action" href="${escapeAttribute(productUrl)}">Ver el sistema completo <span>→</span></a></div>
+    <div class="post-section">${post.why.map((paragraph) => `<p>${paragraph}</p>`).join("")}</div>
+    <div class="post-section outcome">${post.what.map((paragraph) => `<p>${paragraph}</p>`).join("")}</div>
+    <div class="post-section solution"><p>${post.how}</p><a class="primary-action" href="${escapeAttribute(productUrl)}">Ver el sistema completo <span>→</span></a></div>
     <div class="post-pagination"><button id="previous-post" ${index === 0 ? "disabled" : ""}>← Anterior</button><span>${index + 1} / ${posts.length}</span><button id="next-post" ${index === posts.length - 1 ? "disabled" : ""}>Siguiente →</button></div>`;
   card.querySelector("#previous-post").addEventListener("click", () => changePost(index - 1));
   card.querySelector("#next-post").addEventListener("click", () => changePost(index + 1));
@@ -307,3 +307,4 @@ function escapeAttribute(value) {
 function prefersReducedMotion() {
   return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 }
+
