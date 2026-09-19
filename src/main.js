@@ -25,7 +25,9 @@ const capturePage = `
     <form id="lead-form" novalidate>
       <label for="name">Tu nombre</label><input id="name" type="text" autocomplete="name" placeholder="¿Cómo te llamás?" required><p class="field-error" id="name-error" aria-live="polite"></p>
       <label for="email">Tu mejor email</label><input id="email" type="email" autocomplete="email" inputmode="email" placeholder="nombre@ejemplo.com" required><p class="field-error" id="email-error" aria-live="polite"></p>
-      <label class="consent" for="consent"><input id="consent" type="checkbox" required><span>Quiero recibir mi acceso y contenidos útiles de Cuídate Bien. Puedo darme de baja cuando quiera.</span></label>
+      <div class="honeypot" aria-hidden="true"><label for="website">Dejá este campo vacío</label><input id="website" name="website" type="text" tabindex="-1" autocomplete="off"></div>
+      <label class="consent" for="consent"><input id="consent" type="checkbox" required><span>Quiero recibir mi acceso y hasta seis correos durante los próximos días con ideas y detalles del Sistema de Zonificación Creativa con Mascota™. Puedo darme de baja cuando quiera.</span></label>
+      <p class="field-error" id="form-error" aria-live="polite"></p>
       <button id="submit" type="submit" disabled><span class="button-label">Descubrir mi zona</span><span class="button-arrow">→</span></button>
       <p class="privacy-note">⌁ Tus datos se usan únicamente para enviarte el acceso y contenidos relacionados.</p>
     </form>
@@ -75,6 +77,8 @@ function setupForm() {
   const submit = document.querySelector("#submit");
   const nameInput = document.querySelector("#name");
   const emailInput = document.querySelector("#email");
+  const websiteInput = document.querySelector("#website");
+  const formError = document.querySelector("#form-error");
   consent.addEventListener("change", () => { submit.disabled = !consent.checked; });
   form.addEventListener("submit", async (event) => {
     event.preventDefault();
@@ -85,12 +89,30 @@ function setupForm() {
     fieldState(nameInput, "name-error", validName, "Escribí tu nombre para continuar.");
     fieldState(emailInput, "email-error", validEmail, "Ingresá un email válido.");
     if (!validName || !validEmail || !consent.checked) return;
+    formError.textContent = "";
     submit.disabled = true; submit.classList.add("is-loading");
     submit.querySelector(".button-label").textContent = "Enviando...";
     try {
-      await fetch("/api/lead", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name, email }) });
-    } catch (error) { console.warn("No se pudo confirmar el registro antes de redirigir.", error); }
-    finally { window.location.assign("/herramienta"); }
+      const response = await fetch("/api/lead", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name,
+          email,
+          consent: consent.checked,
+          consentVersion: "2026-09-19-followup-v1",
+          website: websiteInput.value,
+        }),
+      });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok || result.success !== true) throw new Error(result.error || "No pudimos guardar tu registro.");
+      window.location.assign("/herramienta");
+    } catch (error) {
+      formError.textContent = error.message || "No pudimos completar el registro. Probá de nuevo.";
+      submit.disabled = !consent.checked;
+      submit.classList.remove("is-loading");
+      submit.querySelector(".button-label").textContent = "Descubrir mi zona";
+    }
   });
 }
 

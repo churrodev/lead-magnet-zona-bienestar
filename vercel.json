@@ -7,5 +7,17 @@
     { "source": "/herramienta", "destination": "/index.html" },
     { "source": "/lead-magnet/assets/:path*", "destination": "/assets/:path*" },
     { "source": "/herramienta/assets/:path*", "destination": "/assets/:path*" }
-  ]
+  ],
+  "crons": [
+    { "path": "/api/sequence-cron", "schedule": "0 13 * * *" }
+  ],
+  "functions": {
+    "api/sequence-cron.js": {
+      "includeFiles": "emails/seguimiento-lead-magnet.txt",
+      "regions": ["gru1"],
+      "maxDuration": 60
+    },
+    "api/lead.js": { "regions": ["gru1"] },
+    "api/unsubscribe.js": { "regions": ["gru1"] }
+  }
 }

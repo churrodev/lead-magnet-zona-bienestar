@@ -6,11 +6,13 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build --base=/herramienta/",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test": "node --test"
   },
   "devDependencies": {
     "vite": "^6.4.3"
+  },
+  "dependencies": {
+    "@neondatabase/serverless": "^1.1.0"
   }
 }
-
-

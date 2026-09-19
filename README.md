@@ -1,33 +1,30 @@
 # Lead Magnet Zona de Bienestar
 
-Base técnica del Lead Magnet **¿Cuál es tu Zona de Bienestar?™**. Esta fase contiene solamente el entorno Vite y una función serverless inicial; todavía no incluye páginas, componentes ni integración con Resend.
+Proyecto Vite con captura de registros, diagnóstico interactivo y backend serverless para el seguimiento por correo del Sistema de Zonificación Creativa con Mascota™.
 
-## Desarrollo local
+## Seguimiento por correo
+
+La secuencia usa la base Neon aislada `zca-lead-recovery`. El formulario guarda nombre, email normalizado, la versión del consentimiento aceptado y su fecha. El primer correo queda programado para la ventana diaria del día UTC siguiente. La función diaria envía como máximo un correo por persona durante seis días y actualiza el registro de envíos. La secuencia continúa aunque la persona compre. Una baja voluntaria la detiene; si esa persona vuelve a registrarse con consentimiento explícito, comienza una generación nueva sin borrar el historial de entregas anterior. Un registro repetido mientras la secuencia sigue activa no la reinicia. Si Resend devuelve un resultado ambiguo, la secuencia se pausa para evitar duplicados y requiere revisión manual.
+
+La baja está disponible en `/api/unsubscribe`; el enlace de un clic de los clientes de correo usa POST. Si el proveedor de correo acepta una solicitud pero la conexión se corta antes de confirmar, esa secuencia se pausa para revisión y así evitar reenvíos duplicados.
+
+## Configuración de Vercel
+
+Vercel conecta `zca-lead-recovery` solo con este proyecto. Las credenciales se guardan como secretos con prefijo `ZCA_LEAD_`; el código usa `ZCA_LEAD_DATABASE_URL`. No copies sus valores al repositorio ni al frontend.
+
+1. Aplicá, en este orden, `db/migrations/001_lead_recovery.sql`, `db/migrations/002_daily_sequence_index.sql` y `db/migrations/003_sequence_generations.sql` en la rama de Production de Neon. La migración 003 debe estar aplicada antes de desplegar el código que usa generaciones.
+2. Confirmá que Production y Preview tengan la URL de base correspondiente. Preview usa una rama separada; debe tener aplicada la migración antes de probar formularios allí.
+3. Configurá `CRON_SECRET` como secreto aleatorio de al menos 16 caracteres.
+4. Revisá el remitente verificado en Resend (`RESEND_API_KEY` y `RESEND_FROM_EMAIL`) y la URL pública de la baja (`ZCA_LEAD_SITE_URL`).
+
+El cron está programado a las 13:00 UTC (10:00 en Buenos Aires). Cada envío queda vencido a las 12:00 UTC del día calendario siguiente para que la variación de inicio del cron no desplace gradualmente la secuencia. En el plan Hobby, Vercel solo permite una ejecución por día y puede iniciarla con hasta 59 minutos de variación, por lo que la entrega real puede ocurrir entre las 13:00 y las 13:59 UTC. Cada ejecución procesa como máximo 20 correos; si el volumen diario supera ese lote, se acumula una cola y los correos excedentes quedan para ejecuciones posteriores. Los envíos con resultado ambiguo quedan pausados y requieren revisión manual.
+
+## Desarrollo y verificación
 
 ```bash
 npm install
-npm run dev
+npm test
+npm run build
 ```
 
-La función `POST /api/lead` recibe un cuerpo JSON con esta estructura:
-
-```json
-{
-  "name": "Nombre",
-  "email": "persona@ejemplo.com"
-}
-```
-
-Por ahora valida los campos y responde `{ "success": true }`. El envío de correo se conectará en una fase posterior.
-
-## Variables de entorno en Vercel
-
-1. Importa este directorio como un proyecto nuevo en Vercel.
-2. Abre **Settings > Environment Variables**.
-3. Crea `RESEND_API_KEY` con una API key activa de Resend.
-4. Crea `RESEND_FROM_EMAIL` con el remitente verificado en Resend.
-5. Activa ambas variables para Production, Preview y Development según corresponda.
-6. Ejecuta un nuevo deployment después de guardar las variables.
-
-No escribas la API key en `.env.example`, en el código del frontend ni en el repositorio. Para desarrollo local, copia `.env.example` como `.env.local` y completa los valores únicamente en ese archivo ignorado por Git.
-
+El build de Vite no ejecuta rutas serverless. Para probar las rutas en un entorno desplegado se necesita Vercel CLI y credenciales de desarrollo propias; nunca uses registros reales para pruebas.
