@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { loadSequence, renderEmailHtml, renderEmailText } from "../api/_lib/sequence-content.js";
+import { loadSequence, renderEmailHtml, renderEmailText, renderUnsubscribePage } from "../api/_lib/sequence-content.js";
 import { buildSequenceIdempotencyKey, nextDailyCronDueAt } from "../api/_lib/sequence-schedule.js";
 
 test("sequence content has six complete daily emails and the real purchase URL", () => {
@@ -21,7 +21,7 @@ test("email renderers escape subscriber input and include purchase and unsubscri
   const sequenceEmail = loadSequence()[0];
   const input = {
     name: "<script>alert(1)</script>",
-    unsubscribeUrl: "https://cuidatebien.com/api/unsubscribe?token=test-token",
+    unsubscribeUrl: "https://cuidatebien.com/lead-magnet/api/unsubscribe?token=test-token",
     sequenceEmail,
   };
 
@@ -32,7 +32,13 @@ test("email renderers escape subscriber input and include purchase and unsubscri
   assert.match(html, /https:\/\/www\.cuidatebien\.com\/zca/);
   assert.match(html, /Darte de baja/);
   assert.match(text, /https:\/\/www\.cuidatebien\.com\/zca/);
-  assert.match(text, /api\/unsubscribe/);
+  assert.match(text, /lead-magnet\/api\/unsubscribe/);
+});
+
+test("unsubscribe confirmation posts back to the current proxied or direct endpoint", () => {
+  const html = renderUnsubscribePage("token with spaces");
+  assert.match(html, /action="\?token=token%20with%20spaces"/);
+  assert.doesNotMatch(html, /action="\/api\/unsubscribe/);
 });
 
 test("daily scheduling targets noon UTC on the next calendar day", () => {

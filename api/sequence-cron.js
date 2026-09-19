@@ -158,7 +158,7 @@ export default async function handler(request, response) {
         continue;
       }
 
-      const unsubscribeUrl = `${SITE_URL}/api/unsubscribe?token=${encodeURIComponent(lead.unsubscribe_token)}`;
+      const unsubscribeUrl = `${SITE_URL}/lead-magnet/api/unsubscribe?token=${encodeURIComponent(lead.unsubscribe_token)}`;
       const personalized = {
         name: lead.name,
         unsubscribeUrl,

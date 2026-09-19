@@ -3,6 +3,8 @@ import { posts, questions, testimonials } from "./toolData.js";
 
 const app = document.querySelector("#app");
 const path = window.location.pathname.replace(/\/$/, "") || "/";
+const publicHosts = new Set(["cuidatebien.com", "www.cuidatebien.com"]);
+const apiBase = publicHosts.has(window.location.hostname) ? "/lead-magnet/api" : "/api";
 
 const capturePage = `
 <main class="capture-shell"><section class="hero" aria-labelledby="page-title">
@@ -93,7 +95,7 @@ function setupForm() {
     submit.disabled = true; submit.classList.add("is-loading");
     submit.querySelector(".button-label").textContent = "Enviando...";
     try {
-      const response = await fetch("/api/lead", {
+      const response = await fetch(`${apiBase}/lead`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
