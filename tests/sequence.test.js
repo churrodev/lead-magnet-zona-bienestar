@@ -1,7 +1,12 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { loadSequence, renderEmailHtml, renderEmailText, renderUnsubscribePage } from "../api/_lib/sequence-content.js";
-import { buildSequenceIdempotencyKey, nextDailyCronDueAt } from "../api/_lib/sequence-schedule.js";
+import {
+  buildSequenceIdempotencyKey,
+  firstEmailScheduledAt,
+  nextDailyCronDueAt,
+  nextEmailDueAt,
+} from "../api/_lib/sequence-schedule.js";
 
 test("sequence content has six complete daily emails and the real purchase URL", () => {
   const sequence = loadSequence();
@@ -54,6 +59,15 @@ test("daily scheduling targets noon UTC on the next calendar day", () => {
     nextDailyCronDueAt(new Date("2026-12-31T23:59:59.999Z")).toISOString(),
     "2027-01-01T12:00:00.000Z",
   );
+});
+
+test("signup schedules the first email in ten minutes and the follow-up 24 hours later", () => {
+  const signupAt = new Date("2026-09-22T14:05:30.000Z");
+  const firstEmailAt = firstEmailScheduledAt(signupAt);
+
+  assert.equal(firstEmailAt.toISOString(), "2026-09-22T14:15:30.000Z");
+  assert.equal(nextEmailDueAt(firstEmailAt).toISOString(), "2026-09-23T14:15:30.000Z");
+  assert.throws(() => firstEmailScheduledAt("not-a-date"), /valid reference date/);
 });
 
 test("sequence idempotency keys isolate each consent generation", () => {
